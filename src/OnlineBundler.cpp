@@ -264,7 +264,8 @@ void OnlineBundler::processInput()
     if ( curLocalFrame > 0 )
     {
         mutex_siftMatcher.lock();
-        m_state.m_bLastFrameValid = m_local->matchAndFilter() != ( ( unsigned int )-1 );
+        // m_state.m_bLastFrameValid = m_local->matchAndFilter() != ( ( unsigned int )-1 );
+        m_state.m_bLastFrameValid = curFrame + 1;
         mutex_siftMatcher.unlock();
         computeCurrentSiftTransform ( m_state.m_bLastFrameValid, curFrame, curLocalFrame, m_state.m_lastValidCompleteTransform );
     }
@@ -283,6 +284,7 @@ void OnlineBundler::processInput()
 bool OnlineBundler::getCurrentIntegrationFrame ( mat4f& siftTransform, unsigned int& frameIdx, bool& bGlobalTrackingLost )
 {
     bGlobalTrackingLost = m_state.m_bGlobalTrackingLost;
+    frameIdx = m_state.m_lastFrameProcessed;
     if ( m_state.m_bLastFrameValid )
     {
         siftTransform = m_currIntegrateTransform[m_state.m_lastFrameProcessed];
@@ -549,9 +551,10 @@ void OnlineBundler::process ( unsigned int numNonLinItersLocal, unsigned int num
         return;    //solver off
     }
 
-    optimizeLocal ( numNonLinItersLocal, numLinItersLocal );
-    processGlobal();
-    optimizeGlobal ( numNonLinItersGlobal, numLinItersGlobal );
+    // optimizeLocal ( numNonLinItersLocal, numLinItersLocal );
+    // processGlobal();
+    // optimizeGlobal ( numNonLinItersGlobal, numLinItersGlobal );
+    m_optLocal->reset();
     //{ //no opt
     //	m_state.m_localToSolve = -1;
     //	m_state.m_processState = BundlerState::DO_NOTHING;

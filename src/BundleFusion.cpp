@@ -171,7 +171,7 @@ bool initBundleFusion ( std::string app_config, std::string bundle_config )
     return true;
 }
 
-bool processInputRGBDFrame ( cv::Mat& rgb, cv::Mat& depth )
+bool processInputRGBDFrame ( cv::Mat& rgb, cv::Mat& depth, mat4f& pose )
 {
     //printf("START FrameRender\n");
     if ( ConditionManager::shouldExit() )
@@ -216,7 +216,7 @@ bool processInputRGBDFrame ( cv::Mat& rgb, cv::Mat& depth )
     ///////////////////////////////////////
     //printf("start reintegrate\n");
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-    reintegrate();
+    // reintegrate();
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     //printf("end reintegrate\n");
 #ifdef RUN_MULTITHREADED
@@ -251,6 +251,19 @@ bool processInputRGBDFrame ( cv::Mat& rgb, cv::Mat& depth )
         {
             //overwrite transform and use given trajectory in this case
             transformation = g_RGBDSensor->getRigidTransform();
+            validTransform = true;
+        }
+
+        if ( GlobalAppState::get().s_binaryDumpSensorUseTrajectory)
+        {
+            //overwrite transform and use given trajectory in this case
+            pose[1] = -1.0f * pose[1];
+            pose[2] = -1.0f * pose[2];
+            pose[3] = -1.0f * pose[3];
+            pose[4] = -1.0f * pose[4];
+            pose[8] = -1.0f * pose[8];
+            pose[12] = -1.0f * pose[12];
+            transformation = pose;
             validTransform = true;
         }
 
@@ -800,9 +813,9 @@ void StopScanningAndExit ( bool aborted = false )
         g_bundler->getTrajectoryManager()->getOptimizedTransforms ( trajectory );
         numValidTransforms = PoseHelper::countNumValidTransforms ( trajectory );
         numTransforms = ( unsigned int ) trajectory.size();
-        if ( numValidTransforms < ( unsigned int ) std::round ( 0.5f * numTransforms ) ) valid = false; // not enough valid transforms
-        std::cout << "#VALID TRANSFORMS = " << numValidTransforms << std::endl;
-        ( ( SensorDataReader* ) g_RGBDSensor )->saveToFile ( GlobalAppState::get().s_binaryDumpSensorFile + "sequence.sens", trajectory ); //overwrite the original file
+        // if ( numValidTransforms < ( unsigned int ) std::round ( 0.5f * numTransforms ) ) valid = false; // not enough valid transforms
+        // std::cout << "#VALID TRANSFORMS = " << numValidTransforms << std::endl;
+        // ( ( SensorDataReader* ) g_RGBDSensor )->saveToFile ( GlobalAppState::get().s_binaryDumpSensorFile + "sequence.sens", trajectory ); //overwrite the original file
 
         //if (GlobalAppState::get().s_sensorIdx == 8) ((SensorDataReader*)g_depthSensingRGBDSensor)->evaluateTrajectory(trajectory);
 

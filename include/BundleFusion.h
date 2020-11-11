@@ -3,7 +3,8 @@
 
 #include <string>
 #include <opencv2/opencv.hpp>
-
+#include "SiftGPU/SiftCameraParams.h"
+#include "SiftGPU/MatrixConversion.h"
 /**
  * init function for bundle fusion:
  * 1. init GPU devices
@@ -24,7 +25,7 @@ bool initBundleFusion(std::string app_config, std::string bundle_config);
  * @param depth input depth frame(format uint16_t)
  * @return current frame process success?
  * */
-bool processInputRGBDFrame(cv::Mat& rgb, cv::Mat& depth);
+bool processInputRGBDFrame(cv::Mat& rgb, cv::Mat& depth, mat4f& pose);
 
 
 /**

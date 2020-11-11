@@ -64,9 +64,26 @@ int main ( int argc, char** argv )
         std::cout<<filename<<std::endl;
         std::string rgb_path = dataset_root + "/" + filename + ".color.jpg";
         std::string dep_path = dataset_root + "/" + filename + ".depth.png";
-        //std::string pos_path = data_root + "/" + filename + ".pose.txt";
+        std::string pos_path = dataset_root + "/" + filename + ".pose.txt";
         cv::Mat rgbImage = cv::imread ( rgb_path );
         cv::Mat depthImage = cv::imread ( dep_path, cv::IMREAD_UNCHANGED );
+
+        mat4f poseImage = mat4f::zero();
+        
+        std::ifstream fin(pos_path);
+        fin >> poseImage;   
+//         if ( ! fin){
+//             cout << "文件不能打开" <<endl;
+//         }
+//         else
+// {
+// char buffer[80];  
+//             // 从磁盘文件输入
+// fin >> buffer;  
+// // 关闭文件输入流      
+        fin.close();  
+
+        // poseImage.loadMatrixFromFile(pos_path);
 
         if ( rgbImage.empty() || depthImage.empty() )
         {
@@ -77,7 +94,7 @@ int main ( int argc, char** argv )
 //         cv::imshow ( "depth_image", depthImage );
          char c = cv::waitKey ( 20 );
 
-        if ( processInputRGBDFrame ( rgbImage,depthImage ) )
+        if ( processInputRGBDFrame ( rgbImage,depthImage, poseImage ) )
         {
             std::cout<<"\tSuccess! frame " << filename << " added into BundleFusion." << std::endl;
         }
@@ -86,9 +103,11 @@ int main ( int argc, char** argv )
             std::cout<<"\Failed! frame " << filename << " not added into BundleFusion." << std::endl;
         }
     }
-    
-    while(cv::waitKey (20) != 'q');
 
+    std::cout<<"Pangolin Viewer save mesh into file" << std::endl;
+    struct timeval t;
+    gettimeofday ( &t,nullptr );
+    saveMeshIntoFile ( GlobalAppState::get().s_generateMeshDir + "scan_" + std::to_string ( t.tv_sec ) + ".ply", true );
 
     deinitBundleFusion();
 

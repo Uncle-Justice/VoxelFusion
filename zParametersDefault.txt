@@ -56,7 +56,7 @@ s_SDFRayThresDistFactor = 50.0f;		//(don't touch) s_SDFRayThresDist = s_SDFRayTh
 s_SDFUseGradients 		= false;		//analytic gradients for rendering
 
 s_binaryDumpSensorFile = "../data/sequence.sens";
-s_binaryDumpSensorUseTrajectory = false;
+s_binaryDumpSensorUseTrajectory = true;
 
 // filtering (unused here, see params in zParametersBundlingDefault.txt)
 s_depthSigmaD = 2.0f;	//bilateral filter sigma domain
