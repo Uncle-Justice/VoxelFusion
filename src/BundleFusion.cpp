@@ -406,14 +406,14 @@ void setPublishMeshFlag ( bool publish_flag )
 }
 
 
-void writeRayCastData(){
+void writeRayCastData(const std::string& filename){
 	RayCastParams rayCastParams = g_rayCast->getRayCastParams();
 
 	RayCastData rayCastDataCUDA = g_rayCast->getRayCastData();
 	
 	RayCastData rayCastData = rayCastDataCUDA.copyToCPU(rayCastParams);
 
-	BinaryDataStreamFile outStream("./rayCastData.bin", true);
+	BinaryDataStreamFile outStream(filename, true);
 
 	outStream.writeData((BYTE*)rayCastData.d_depth, sizeof(float) * rayCastParams.m_width * rayCastParams.m_height);
 	outStream.writeData((BYTE*)rayCastData.d_depth4, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
@@ -423,8 +423,8 @@ void writeRayCastData(){
 	outStream.close();
 }
 
-void writeHashData(){
-	BinaryDataStreamFile outStream("./hashData.bin", true);
+void writeHashData(const std::string& filename){
+	BinaryDataStreamFile outStream(filename, true);
 
 	// save Hash Parameters 
 
@@ -505,7 +505,7 @@ bool saveMeshIntoFile ( const std::string& filename, bool overwriteExistingFile 
     std::cout << "running marching cubes...1" << std::endl;
 
     Timer t;
-
+    
 
     g_marchingCubesHashSDF->clearMeshBuffer();
     if ( !GlobalAppState::get().s_streamingEnabled )
@@ -515,9 +515,10 @@ bool saveMeshIntoFile ( const std::string& filename, bool overwriteExistingFile 
         g_marchingCubesHashSDF->extractIsoSurface ( g_sceneRep->getHashData(), g_sceneRep->getHashParams(), g_rayCast->getRayCastData() );
         //g_chunkGrid->startMultiThreading();
 
-        writeHashData();
+        
+        writeHashData("./hashData_"+filename.substr(filename.length()-14).substr(0,10)+".bin");
 
-		writeRayCastData();
+		writeRayCastData("./rayCastData_"+filename.substr(filename.length()-14).substr(0,10)+".bin");
 
     }
     else

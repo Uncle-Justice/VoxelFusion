@@ -58,6 +58,12 @@ s_SDFUseGradients 		= false;		//analytic gradients for rendering
 s_binaryDumpSensorFile = "../data/sequence.sens";
 s_binaryDumpSensorUseTrajectory = true;
 
+s_loadHashData = false;
+s_hashDataFile = "./hashData.bin";
+
+s_loadRayCastData = true;
+s_rayCastDataFile = "./rayCastData.bin";
+
 // filtering (unused here, see params in zParametersBundlingDefault.txt)
 s_depthSigmaD = 2.0f;	//bilateral filter sigma domain
 s_depthSigmaR = 0.1f;	//bilateral filter sigma range

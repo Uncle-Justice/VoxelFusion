@@ -57,23 +57,23 @@ void CUDAMarchingCubesHashSDF::saveMesh ( const std::string& filename, const mat
     }
 
     std::string actualFilename = filename;
-    if ( !overwriteExistingFile )
-    {
-        while ( util::fileExists ( actualFilename ) )
-        {
-            std::string path = util::directoryFromPath ( actualFilename );
-            std::string curr = util::fileNameFromPath ( actualFilename );
-            std::string ext = util::getFileExtension ( curr );
-            curr = util::removeExtensions ( curr );
-            std::string base = util::getBaseBeforeNumericSuffix ( curr );
-            unsigned int num = util::getNumericSuffix ( curr );
-            if ( num == ( unsigned int )-1 )
-            {
-                num = 0;
-            }
-            actualFilename = path + base + std::to_string ( num + 1 ) + "." + ext;
-        }
-    }
+    // if ( !overwriteExistingFile )
+    // {
+    //     while ( util::fileExists ( actualFilename ) )
+    //     {
+    //         std::string path = util::directoryFromPath ( actualFilename );
+    //         std::string curr = util::fileNameFromPath ( actualFilename );
+    //         std::string ext = util::getFileExtension ( curr );
+    //         curr = util::removeExtensions ( curr );
+    //         std::string base = util::getBaseBeforeNumericSuffix ( curr );
+    //         unsigned int num = util::getNumericSuffix ( curr );
+    //         if ( num == ( unsigned int )-1 )
+    //         {
+    //             num = 0;
+    //         }
+    //         actualFilename = path + base + std::to_string ( num + 1 ) + "." + ext;
+    //     }
+    // }
 
     //create index buffer (required for merging the triangle soup)
     m_meshData.m_FaceIndicesVertices.resize ( m_meshData.m_Vertices.size() );
