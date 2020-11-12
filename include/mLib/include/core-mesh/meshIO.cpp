@@ -635,11 +635,11 @@ void MeshIO<FloatType>::saveToPLY ( const std::string& filename, const MeshData<
 	
 	std::cout<<"\n\tvertices size: "<< mesh.m_Vertices.size() << 
 	"\n\tm_Normals size: " << mesh.m_Normals.size() << 
-	"\n\tm_Colors size: "<< mesh.m_Colors.size() << "\n\n\n"<< std::endl;
+	"\n\tm_Colors size: "<< mesh.m_Colors.size() << "\n"<< std::endl;
 	
 	std::cout<<"\n\tm_FaceIndicesVertices size: "<< mesh.m_FaceIndicesVertices.size() << 
 	"\n\tm_FaceIndicesNormals size: " << mesh.m_FaceIndicesNormals.size() << 
-	"\n\tm_FaceIndicesColors size: "<< mesh.m_FaceIndicesColors.size() << "\n\n\n"<< std::endl;
+	"\n\tm_FaceIndicesColors size: "<< mesh.m_FaceIndicesColors.size() << "\n"<< std::endl;
 	
     std::ofstream file ( filename, std::ios::binary );
     if ( !file.is_open() ) throw MLIB_EXCEPTION ( "Could not open file for writing " + filename );

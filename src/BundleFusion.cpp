@@ -284,12 +284,12 @@ bool processInputRGBDFrame ( cv::Mat& rgb, cv::Mat& depth, mat4f& pose )
         {
             g_bundler->getTrajectoryManager()->addFrame ( TrajectoryManager::TrajectoryFrame::NotIntegrated_NoTransform, mat4f::zero ( -std::numeric_limits<float>::infinity() ), g_imageManager->getCurrFrameNumber() );
         }
-        std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
-        std::chrono::duration<double> time_used = std::chrono::duration_cast<std::chrono::duration<double>> ( t2 - t1 +t4 - t3 );
-        std::cout << "depthSensing time cost = " << time_used.count() << " seconds." << std::endl;
+        // std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
+        // std::chrono::duration<double> time_used = std::chrono::duration_cast<std::chrono::duration<double>> ( t2 - t1 +t4 - t3 );
+        // std::cout << "depthSensing time cost = " << time_used.count() << " seconds." << std::endl;
 
-        std::chrono::duration<double> time_total = std::chrono::duration_cast<std::chrono::duration<double>> ( t4 - t1 );
-        std::cout << "total time cost = " << time_total.count() << " seconds." << std::endl;
+        // std::chrono::duration<double> time_total = std::chrono::duration_cast<std::chrono::duration<double>> ( t4 - t1 );
+        // std::cout << "total time cost = " << time_total.count() << " seconds." << std::endl;
 
         if ( validTransform )
         {
@@ -407,6 +407,8 @@ void setPublishMeshFlag ( bool publish_flag )
 
 
 void writeRayCastData(const std::string& filename){
+    std::cout << "saving raycast data (" << filename << ")... ";
+
 	RayCastParams rayCastParams = g_rayCast->getRayCastParams();
 
 	RayCastData rayCastDataCUDA = g_rayCast->getRayCastData();
@@ -421,9 +423,13 @@ void writeRayCastData(const std::string& filename){
 	outStream.writeData((BYTE*)rayCastData.d_colors, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
 
 	outStream.close();
+
+    std::cout<<"done!\n";
 }
 
 void writeHashData(const std::string& filename){
+    std::cout<<"saving hash data (" << filename << ")... ";
+    
 	BinaryDataStreamFile outStream(filename, true);
 
 	// save Hash Parameters 
@@ -491,6 +497,8 @@ void writeHashData(const std::string& filename){
 	//outStream.writeData((BYTE*)hashData.m_bIsOnGPU, sizeof(bool));
 
 	outStream.close();
+
+    std::cout<<"done!\n";
 }
 
 bool saveMeshIntoFile ( const std::string& filename, bool overwriteExistingFile /*= false*/ )

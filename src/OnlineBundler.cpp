@@ -195,7 +195,7 @@ void OnlineBundler::processInput()
 {
     std::chrono::steady_clock::time_point detect_t1 = std::chrono::steady_clock::now();
     const unsigned int curFrame = m_cudaImageManager->getCurrFrameNumber();
-    printf ( "bundling process input! Frame[%d]\n",curFrame );
+    // printf ( "bundling process input! Frame[%d]\n",curFrame );
     const bool bIsLastLocal = isLastLocalFrame ( curFrame );
     if ( curFrame > 0 && m_state.m_lastFrameProcessed == curFrame ) //sequence has ended (no new frames from cudaimagemanager)
     {
@@ -276,9 +276,9 @@ void OnlineBundler::processInput()
     }
 
     m_state.m_lastFrameProcessed = curFrame;
-    std::chrono::steady_clock::time_point detect_t2 = std::chrono::steady_clock::now();
-    std::chrono::duration<double> time111 = std::chrono::duration_cast<std::chrono::duration<double>> ( detect_t2 - detect_t1 );
-    std::cout << "processInput time cost = " << time111.count() << " seconds." << std::endl;
+    // std::chrono::steady_clock::time_point detect_t2 = std::chrono::steady_clock::now();
+    // std::chrono::duration<double> time111 = std::chrono::duration_cast<std::chrono::duration<double>> ( detect_t2 - detect_t1 );
+    // std::cout << "processInput time cost = " << time111.count() << " seconds." << std::endl;
 }
 
 bool OnlineBundler::getCurrentIntegrationFrame ( mat4f& siftTransform, unsigned int& frameIdx, bool& bGlobalTrackingLost )

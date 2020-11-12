@@ -43,6 +43,12 @@ int main ( int argc, char** argv )
     struct dirent *ptr;
     DIR *dir;
     dir = opendir ( dataset_root.c_str() );
+
+    if(dir == nullptr){
+        std::cerr << "dataset path not exist or empty, exit." << std::endl;
+        return -1;
+    }
+
     std::vector<std::string> filenames;
     while ( ( ptr=readdir ( dir ) ) !=nullptr )
     {
@@ -61,7 +67,7 @@ int main ( int argc, char** argv )
     std::sort ( filenames.begin(), filenames.end() );
     for ( auto& filename : filenames )
     {
-        std::cout<<filename<<std::endl;
+        // std::cout<<filename<<std::endl;
         std::string rgb_path = dataset_root + "/" + filename + ".color.jpg";
         std::string dep_path = dataset_root + "/" + filename + ".depth.png";
         std::string pos_path = dataset_root + "/" + filename + ".pose.txt";
@@ -96,11 +102,11 @@ int main ( int argc, char** argv )
 
         if ( processInputRGBDFrame ( rgbImage,depthImage, poseImage ) )
         {
-            std::cout<<"\tSuccess! frame " << filename << " added into BundleFusion." << std::endl;
+            std::cout<<"frame: " << filename << " added into BundleFusion." << std::endl;
         }
         else
         {
-            std::cout<<"\Failed! frame " << filename << " not added into BundleFusion." << std::endl;
+            std::cout<<"\Failed! frame: " << filename << " not added into BundleFusion." << std::endl;
         }
     }
 
