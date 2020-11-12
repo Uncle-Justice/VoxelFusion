@@ -72,6 +72,22 @@ struct RayCastData {
 			MLIB_CUDA_SAFE_FREE(d_normals);
 			MLIB_CUDA_SAFE_FREE(d_colors);
 	}
+
+	__host__
+		RayCastData copyToCPU(const RayCastParams& params){
+			RayCastData rayCastData;
+			rayCastData.allocate(params);
+			rayCastData.d_depth = new float[params.m_width * params.m_height];
+			rayCastData.d_depth4 = new float4[params.m_width * params.m_height];
+			rayCastData.d_normals = new float4[params.m_width * params.m_height];
+			rayCastData.d_colors = new float4[params.m_width * params.m_height];
+			cutilSafeCall(cudaMemcpy(rayCastData.d_depth, d_depth, sizeof(float) * params.m_width * params.m_height, cudaMemcpyDeviceToHost));
+			cutilSafeCall(cudaMemcpy(rayCastData.d_depth4, d_depth4, sizeof(float4) * params.m_width * params.m_height, cudaMemcpyDeviceToHost));
+			cutilSafeCall(cudaMemcpy(rayCastData.d_normals, d_normals, sizeof(float4) * params.m_width * params.m_height, cudaMemcpyDeviceToHost));
+			cutilSafeCall(cudaMemcpy(rayCastData.d_colors, d_colors, sizeof(float4) * params.m_width * params.m_height, cudaMemcpyDeviceToHost));
+
+			return rayCastData;
+	}	
 #endif
 
 	/////////////////

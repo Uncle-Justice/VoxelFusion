@@ -405,6 +405,94 @@ void setPublishMeshFlag ( bool publish_flag )
     publish_mesh = publish_flag;
 }
 
+
+void writeRayCastData(){
+	RayCastParams rayCastParams = g_rayCast->getRayCastParams();
+
+	RayCastData rayCastDataCUDA = g_rayCast->getRayCastData();
+	
+	RayCastData rayCastData = rayCastDataCUDA.copyToCPU(rayCastParams);
+
+	BinaryDataStreamFile outStream("./rayCast.bin", true);
+
+	outStream.writeData((BYTE*)rayCastData.d_depth, sizeof(float) * rayCastParams.m_width * rayCastParams.m_height);
+	outStream.writeData((BYTE*)rayCastData.d_depth4, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
+	outStream.writeData((BYTE*)rayCastData.d_normals, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
+	outStream.writeData((BYTE*)rayCastData.d_colors, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
+
+	outStream.close();
+}
+
+void writeHashData(){
+	BinaryDataStreamFile outStream("./hashData.bin", true);
+
+	// save Hash Parameters 
+
+	HashParams hashParams = g_sceneRep->getHashParams();
+
+	float m_rigidTransform[16] = { hashParams.m_rigidTransform[0], hashParams.m_rigidTransform[1], hashParams.m_rigidTransform[2], hashParams.m_rigidTransform[3],
+		hashParams.m_rigidTransform[4], hashParams.m_rigidTransform[5], hashParams.m_rigidTransform[6], hashParams.m_rigidTransform[7],
+		hashParams.m_rigidTransform[8], hashParams.m_rigidTransform[9], hashParams.m_rigidTransform[10], hashParams.m_rigidTransform[11],
+		hashParams.m_rigidTransform[12], hashParams.m_rigidTransform[13], hashParams.m_rigidTransform[14], hashParams.m_rigidTransform[15], };
+
+	outStream.writeData((BYTE*)m_rigidTransform, sizeof(float) * 16);
+
+	float m_rigidTransformInverse[16] = { hashParams.m_rigidTransformInverse[0], hashParams.m_rigidTransformInverse[1], hashParams.m_rigidTransformInverse[2], hashParams.m_rigidTransformInverse[3],
+		hashParams.m_rigidTransformInverse[4], hashParams.m_rigidTransformInverse[5], hashParams.m_rigidTransformInverse[6], hashParams.m_rigidTransformInverse[7],
+		hashParams.m_rigidTransformInverse[8], hashParams.m_rigidTransformInverse[9], hashParams.m_rigidTransformInverse[10], hashParams.m_rigidTransformInverse[11],
+		hashParams.m_rigidTransformInverse[12], hashParams.m_rigidTransformInverse[13], hashParams.m_rigidTransformInverse[14], hashParams.m_rigidTransformInverse[15], };
+
+	outStream.writeData((BYTE*)m_rigidTransformInverse, sizeof(float) * 16);
+
+	outStream << hashParams.m_hashNumBuckets << hashParams.m_hashBucketSize << hashParams.m_hashMaxCollisionLinkedListSize << hashParams.m_numSDFBlocks;
+
+	outStream << hashParams.m_SDFBlockSize << hashParams.m_virtualVoxelSize << hashParams.m_numOccupiedBlocks;
+
+	outStream << hashParams.m_maxIntegrationDistance << hashParams.m_truncScale << hashParams.m_truncation << hashParams.m_integrationWeightSample << hashParams.m_integrationWeightMax;
+
+	float m_streamingVoxelExtents[3] = { hashParams.m_streamingVoxelExtents.x, hashParams.m_streamingVoxelExtents.y, hashParams.m_streamingVoxelExtents.z };
+
+	int m_streamingGridDimensions[3] = { hashParams.m_streamingGridDimensions.x, hashParams.m_streamingGridDimensions.y, hashParams.m_streamingGridDimensions.z };
+
+	int m_streamingMinGridPos[3] = { hashParams.m_streamingMinGridPos.x, hashParams.m_streamingMinGridPos.y, hashParams.m_streamingMinGridPos.z };
+
+	unsigned int m_dummy[2] = { hashParams.m_dummy.x, hashParams.m_dummy.y };
+
+	outStream.writeData((BYTE*)m_streamingVoxelExtents, sizeof(float) * 3);
+
+	outStream.writeData((BYTE*)m_streamingGridDimensions, sizeof(int) * 3);
+
+	outStream.writeData((BYTE*)m_streamingMinGridPos, sizeof(int) * 3);
+
+	outStream.writeData((BYTE*)m_dummy, sizeof(unsigned int) * 2);
+
+	// Save Hash Data
+
+	HashDataStruct hashData = g_sceneRep->getHashData().copyToCPU(hashParams);
+
+	outStream.writeData((BYTE*)hashData.d_heap, sizeof(unsigned int) * hashParams.m_numSDFBlocks);
+
+	outStream.writeData((BYTE*)hashData.d_heapCounter, sizeof(unsigned int));
+
+	outStream.writeData((BYTE*)hashData.d_hashDecision, sizeof(int) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	outStream.writeData((BYTE*)hashData.d_hashDecisionPrefix, sizeof(int) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	outStream.writeData((BYTE*)hashData.d_hash, sizeof(HashEntry) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	outStream.writeData((BYTE*)hashData.d_hashCompactified, sizeof(HashEntry) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	outStream.writeData((BYTE*)hashData.d_hashCompactifiedCounter, sizeof(int));
+
+	outStream.writeData((BYTE*)hashData.d_SDFBlocks, sizeof(Voxel) * hashParams.m_numSDFBlocks * hashParams.m_SDFBlockSize * hashParams.m_SDFBlockSize * hashParams.m_SDFBlockSize);
+
+	outStream.writeData((BYTE*)hashData.d_hashBucketMutex, sizeof(int) * hashParams.m_hashNumBuckets);
+
+	//outStream.writeData((BYTE*)hashData.m_bIsOnGPU, sizeof(bool));
+
+	outStream.close();
+}
+
 bool saveMeshIntoFile ( const std::string& filename, bool overwriteExistingFile /*= false*/ )
 {
     //g_sceneRep->debugHash();
@@ -426,6 +514,11 @@ bool saveMeshIntoFile ( const std::string& filename, bool overwriteExistingFile 
         //g_chunkGrid->streamInToGPUAll();
         g_marchingCubesHashSDF->extractIsoSurface ( g_sceneRep->getHashData(), g_sceneRep->getHashParams(), g_rayCast->getRayCastData() );
         //g_chunkGrid->startMultiThreading();
+
+        writeHashData();
+
+		writeRayCastData();
+
     }
     else
     {
