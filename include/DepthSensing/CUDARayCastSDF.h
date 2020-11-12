@@ -52,7 +52,7 @@ public:
 
 	void render(const HashDataStruct& hashData, const HashParams& hashParams, const mat4f& lastRigidTransform);
 
-	const RayCastData& getRayCastData(void) {
+	RayCastData& getRayCastData(void) {
 		return m_data;
 	}
 	const RayCastParams& getRayCastParams() const {

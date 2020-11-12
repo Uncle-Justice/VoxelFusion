@@ -53,11 +53,21 @@ struct RayCastData {
 
 #ifndef __CUDACC__
 	__host__
-	void allocate(const RayCastParams& params) {
-		MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_depth, sizeof(float) * params.m_width * params.m_height));
-		MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_depth4, sizeof(float4) * params.m_width * params.m_height));
-		MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_normals, sizeof(float4) * params.m_width * params.m_height));
-		MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_colors, sizeof(float4) * params.m_width * params.m_height));
+		void allocate(const RayCastParams& params, bool isOnGPU = true) {
+		if (isOnGPU){
+
+			MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_depth, sizeof(float) * params.m_width * params.m_height));
+			MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_depth4, sizeof(float4) * params.m_width * params.m_height));
+			MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_normals, sizeof(float4) * params.m_width * params.m_height));
+			MLIB_CUDA_SAFE_CALL(cudaMalloc(&d_colors, sizeof(float4) * params.m_width * params.m_height));
+
+		}
+		else{
+			d_depth = new float[params.m_width * params.m_height];
+			d_depth4 = new float4[params.m_width * params.m_height];
+			d_normals = new float4[params.m_width * params.m_height];
+			d_colors = new float4[params.m_width * params.m_height];
+		}
 	}
 
 	__host__
@@ -88,6 +98,15 @@ struct RayCastData {
 
 			return rayCastData;
 	}	
+
+	__host__
+		void copyToGPU(const RayCastData rayCastData, RayCastParams params){
+			
+			cutilSafeCall(cudaMemcpy(d_depth, rayCastData.d_depth, sizeof(float) * params.m_width * params.m_height, cudaMemcpyHostToDevice));
+			cutilSafeCall(cudaMemcpy(d_depth4, rayCastData.d_depth4, sizeof(float4) * params.m_width * params.m_height, cudaMemcpyHostToDevice));
+			cutilSafeCall(cudaMemcpy(d_normals, rayCastData.d_normals, sizeof(float4) * params.m_width * params.m_height, cudaMemcpyHostToDevice));
+			cutilSafeCall(cudaMemcpy(d_colors, rayCastData.d_colors, sizeof(float4) * params.m_width * params.m_height, cudaMemcpyHostToDevice));
+		}
 #endif
 
 	/////////////////

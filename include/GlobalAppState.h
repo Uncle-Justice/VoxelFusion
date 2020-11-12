@@ -47,6 +47,10 @@
 	X(uint, s_SDFIntegrationWeightMax) \
 	X(std::string, s_binaryDumpSensorFile) \
 	X(bool, s_binaryDumpSensorUseTrajectory) \
+	X(bool, s_loadHashData) \
+	X(std::string, s_hashDataFile) \
+	X(bool, s_loadRayCastData) \
+	X(std::string, s_rayCastDataFile) \
 	X(float, s_depthSigmaD) \
 	X(float, s_depthSigmaR) \
 	X(bool, s_depthFilter) \

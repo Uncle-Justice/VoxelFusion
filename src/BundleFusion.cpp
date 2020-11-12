@@ -413,7 +413,7 @@ void writeRayCastData(){
 	
 	RayCastData rayCastData = rayCastDataCUDA.copyToCPU(rayCastParams);
 
-	BinaryDataStreamFile outStream("./rayCast.bin", true);
+	BinaryDataStreamFile outStream("./rayCastData.bin", true);
 
 	outStream.writeData((BYTE*)rayCastData.d_depth, sizeof(float) * rayCastParams.m_width * rayCastParams.m_height);
 	outStream.writeData((BYTE*)rayCastData.d_depth4, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
@@ -683,12 +683,98 @@ void bundlingThreadFunc()
     }
 }
 
+void loadHashAndRayCastData(){
+	BinaryDataStreamFile hashDataInStream(GlobalAppState::get().s_hashDataFile, false);
+	std::cout<<"Start loading existing hash and ray cast data ...";
+	// load hash params
+	HashParams hashParams;
+	for (int i = 0; i < 16; i++){
+		hashDataInStream >> hashParams.m_rigidTransform[i];
+	}
+
+	for (int i = 0; i < 16; i++){
+		hashDataInStream >> hashParams.m_rigidTransformInverse[i];
+	}
+
+	hashDataInStream >> hashParams.m_hashNumBuckets >> hashParams.m_hashBucketSize >> hashParams.m_hashMaxCollisionLinkedListSize >> hashParams.m_numSDFBlocks;
+
+	hashDataInStream >> hashParams.m_SDFBlockSize >> hashParams.m_virtualVoxelSize >> hashParams.m_numOccupiedBlocks;
+
+	hashDataInStream >> hashParams.m_maxIntegrationDistance >> hashParams.m_truncScale >> hashParams.m_truncation >> hashParams.m_integrationWeightSample >> hashParams.m_integrationWeightMax;
+
+	// 这里等下改成readData
+		
+	hashDataInStream >> hashParams.m_streamingVoxelExtents.x >> hashParams.m_streamingVoxelExtents.y >> hashParams.m_streamingVoxelExtents.z;
+
+	hashDataInStream >> hashParams.m_streamingGridDimensions.x >> hashParams.m_streamingGridDimensions.y >> hashParams.m_streamingGridDimensions.z;
+
+	hashDataInStream >> hashParams.m_streamingMinGridPos.x >> hashParams.m_streamingMinGridPos.y >> hashParams.m_streamingMinGridPos.z;
+
+	hashDataInStream >> hashParams.m_dummy.x >> hashParams.m_dummy.y;
+
+	// load hash data
+
+	HashDataStruct hashData;
+	hashData.allocate(hashParams, false);
+
+	hashDataInStream.readData((BYTE*)hashData.d_heap, sizeof(unsigned int) * hashParams.m_numSDFBlocks);
+
+	hashDataInStream.readData((BYTE*)hashData.d_heapCounter, sizeof(unsigned int));
+
+	hashDataInStream.readData((BYTE*)hashData.d_hashDecision, sizeof(int) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	hashDataInStream.readData((BYTE*)hashData.d_hashDecisionPrefix, sizeof(int) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	hashDataInStream.readData((BYTE*)hashData.d_hash, sizeof(HashEntry) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	hashDataInStream.readData((BYTE*)hashData.d_hashCompactified, sizeof(HashEntry) * hashParams.m_hashNumBuckets * hashParams.m_hashBucketSize);
+
+	hashDataInStream.readData((BYTE*)hashData.d_hashCompactifiedCounter, sizeof(int));
+
+	// may take long time
+	hashDataInStream.readData((BYTE*)hashData.d_SDFBlocks, sizeof(Voxel) * hashParams.m_numSDFBlocks * hashParams.m_SDFBlockSize * hashParams.m_SDFBlockSize * hashParams.m_SDFBlockSize);
+
+	hashDataInStream.readData((BYTE*)hashData.d_hashBucketMutex, sizeof(int) * hashParams.m_hashNumBuckets);
+
+	g_sceneRep->getHashData().copyToGPU(hashData, hashParams);
+
+	hashDataInStream.close();
+
+	RayCastData rayCastData;
+
+	BinaryDataStreamFile rayCastDataInStream(GlobalAppState::get().s_rayCastDataFile, false);
+
+	RayCastParams rayCastParams = g_rayCast->getRayCastParams();
+
+	rayCastData.allocate(rayCastParams,false);
+	// RayCastData rayCastDataCUDA = g_rayCast->getRayCastData();
+		
+	// RayCastData rayCastData = rayCastDataCUDA.copyToCPU(rayCastParams);
+
+	// BinaryDataStreamFile outStream("rayCastData.bin", true);
+
+	rayCastDataInStream.readData((BYTE*)rayCastData.d_depth, sizeof(float) * rayCastParams.m_width * rayCastParams.m_height);
+	rayCastDataInStream.readData((BYTE*)rayCastData.d_depth4, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
+	rayCastDataInStream.readData((BYTE*)rayCastData.d_normals, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
+	rayCastDataInStream.readData((BYTE*)rayCastData.d_colors, sizeof(float4) * rayCastParams.m_width * rayCastParams.m_height);
+
+	g_rayCast->getRayCastData().copyToGPU(rayCastData, rayCastParams);
+
+	rayCastDataInStream.close();
+
+	std::cout<<"DONE! \n";
+}
+
 bool CreateDevice()
 {
 
     g_sceneRep = new CUDASceneRepHashSDF ( CUDASceneRepHashSDF::parametersFromGlobalAppState ( GlobalAppState::get() ) );
     //g_rayCast = new CUDARayCastSDF(CUDARayCastSDF::parametersFromGlobalAppState(GlobalAppState::get(), g_imageManager->getColorIntrinsics(), g_CudaImageManager->getColorIntrinsicsInv()));
     g_rayCast = new CUDARayCastSDF ( CUDARayCastSDF::parametersFromGlobalAppState ( GlobalAppState::get(), g_imageManager->getDepthIntrinsics(), g_imageManager->getDepthIntrinsicsInv() ) );
+
+    if(GlobalAppState::get().s_loadHashData && GlobalAppState::get().s_loadRayCastData){
+		loadHashAndRayCastData();
+	}
 
     g_marchingCubesHashSDF = new CUDAMarchingCubesHashSDF ( CUDAMarchingCubesHashSDF::parametersFromGlobalAppState ( GlobalAppState::get() ) );
     g_historgram = new CUDAHistrogramHashSDF ( g_sceneRep->getHashParams() );

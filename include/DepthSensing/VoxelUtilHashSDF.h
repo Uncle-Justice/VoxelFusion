@@ -211,6 +211,22 @@ struct HashDataStruct {
 		return hashData;	//TODO MATTHIAS look at this (i.e,. when does memory get destroyed ; if it's in the destructer it would kill everything here 
 	}
 
+	__host__
+	void copyToGPU(const HashDataStruct hashData, HashParams params){
+		cutilSafeCall(cudaMemcpy(d_heapCounter, hashData.d_heapCounter, sizeof(unsigned int), cudaMemcpyHostToDevice));
+		
+		cutilSafeCall(cudaMemcpy(d_heap, hashData.d_heap, sizeof(unsigned int) * params.m_numSDFBlocks, cudaMemcpyHostToDevice));
+		cutilSafeCall(cudaMemcpy(d_hash, hashData.d_hash, sizeof(HashEntry)* params.m_hashNumBuckets * params.m_hashBucketSize, cudaMemcpyHostToDevice));
+		cutilSafeCall(cudaMemcpy(d_hashDecision, hashData.d_hashDecision, sizeof(int)*params.m_hashNumBuckets * params.m_hashBucketSize, cudaMemcpyHostToDevice));
+		cutilSafeCall(cudaMemcpy(d_hashDecisionPrefix, hashData.d_hashDecisionPrefix, sizeof(int)*params.m_hashNumBuckets * params.m_hashBucketSize, cudaMemcpyHostToDevice));
+		cutilSafeCall(cudaMemcpy(d_hashCompactified, hashData.d_hashCompactified, sizeof(HashEntry)* params.m_hashNumBuckets * params.m_hashBucketSize, cudaMemcpyHostToDevice));
+		cutilSafeCall(cudaMemcpy(d_hashCompactifiedCounter, hashData.d_hashCompactifiedCounter, sizeof(int), cudaMemcpyHostToDevice));
+		cutilSafeCall(cudaMemcpy(d_SDFBlocks, hashData.d_SDFBlocks, sizeof(Voxel) * params.m_numSDFBlocks * params.m_SDFBlockSize*params.m_SDFBlockSize*params.m_SDFBlockSize, cudaMemcpyHostToDevice));
+		cutilSafeCall(cudaMemcpy(d_hashBucketMutex, hashData.d_hashBucketMutex, sizeof(int)* params.m_hashNumBuckets, cudaMemcpyHostToDevice));
+
+		// 是不是要把hashData里面的空间都释放了？	
+	
+	}
 
 
 
