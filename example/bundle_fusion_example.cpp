@@ -96,9 +96,9 @@ int main ( int argc, char** argv )
             std::cout<<"no image founded" << std::endl;
         }
 
-         cv::imshow ( "rgb_image", rgbImage );
+         // cv::imshow ( "rgb_image", rgbImage );
 //         cv::imshow ( "depth_image", depthImage );
-         char c = cv::waitKey ( 20 );
+         // char c = cv::waitKey ( 20 );
 
         if ( processInputRGBDFrame ( rgbImage,depthImage, poseImage ) )
         {
