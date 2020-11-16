@@ -28,7 +28,7 @@ int main ( int argc, char** argv )
 {
     if ( argc != 5 )
     {
-        std::cout<<"usage: ./bundle_fusion_example /path/to/zParametersDefault.txt /path/to/zParametersBundlingDefault.txt /path/to/dataset"<<std::endl;
+        std::cout<<"usage: ./bundle_fusion_example /path/to/zParametersDefault.txt /path/to/zParametersBundlingDefault.txt /path/to/dataset /path/to/output"<<std::endl;
         return -1;
     }
 
@@ -52,7 +52,7 @@ int main ( int argc, char** argv )
     if ( !initBundleFusion ( app_config_file, bundle_config_file ) )
     {
         std::cerr<<"BundleFusion init failed, exit." << std::endl;
-        return -1;
+        return 1;
     }
 
     // read for bundlefusion dataset from http://graphics.stanford.edu/projects/bundlefusion/
@@ -62,14 +62,14 @@ int main ( int argc, char** argv )
 
     if(dir == nullptr){
         std::cerr << "dataset path not exist or empty, exit." << std::endl;
-        return -1;
+        return 1;
     }
 
     DIR *dir_out;
     dir_out = opendir(output_root.c_str());
     if(dir_out == nullptr){
         std::cerr << "output path not exist or empty, exit." << std::endl;
-        return -1;
+        return 1;
     }
 
     mkdir_path(output_root+"/scan");
