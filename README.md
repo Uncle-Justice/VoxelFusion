@@ -1,14 +1,8 @@
-# BundleFusion_Ubuntu_Pangolin
-This is an ubuntu porting project for [https://github.com/niessner/BundleFusion](https://github.com/niessner/BundleFusion), a GPU-based 3D reconstruction method. 
-<br>
-<b>Youtube Demo:</b>[https://www.youtube.com/watch?v=QOHhFObUprA](https://www.youtube.com/watch?v=QOHhFObUprA)
-<p align="center">
-<a href="https://www.youtube.com/watch?v=QOHhFObUprA
-" target="_blank"><img src="asset/demo_office2.png"
-alt="demo for BundleFusion_Ubuntu" width="720" height="540" /></a>
-</p>
+# Voxel Fusion
 
+This is an ubuntu porting project for [https://github.com/niessner/BundleFusion](https://github.com/niessner/BundleFusion), a GPU-based 3D reconstruction method.
 
+The main part of BundleFusion is discarded for personnal reason. Now this project is just about 3D reconstruction from raw RGBD and pose data.
 
 ```
 @article{dai2017bundlefusion,
@@ -21,22 +15,20 @@ alt="demo for BundleFusion_Ubuntu" width="720" height="540" /></a>
 
 ## Installation
 
-This code is tested under ubuntu16.04/GCC7/CUDA10.1 (GPU: RTX2060).
+This code is tested under ubuntu16.04/GCC7/CUDA10.1 (GPU: 1060Ti).
 
 Requirements:
 
 * CMake
 * Eigen 3.1.0
-* NVIDIA CUDA 9.0/10.+
-* OpenCV
+* NVIDIA CUDA /10.+
+* OpenCV3.5.1
 
-Optional:
-
-* Pangolin
+## Compiling
 
 ```
 mkdir build && cd build
-cmake -DVISUALIZATION=ON ..
+cmake -DVISUALIZATION=OFF ..
 make -j8
 ```
 
@@ -49,46 +41,36 @@ We use -DVISUALIZATION=OFF/ON to switch visualization plug.
 
 ```
 cd build
-./bundle_fusion_example ../zParametersDefault.txt ../zParametersBundlingDefault.txt /PATH/TO/dataset/office2
+./bundle_fusion_example ../zParametersDefault.txt ../zParametersBundlingDefault.txt /PATH/TO/dataset/office2 /PATH/TO/output
 ```
 
-A pangolin window will show up and get real time reconstruction  result.
+The docker image is also provided. Following the code below:
 
-* Save Mesh:
+```shell
+## 下载镜像
+sudo docker push 873292889/voxelfusion
 
-we provide save mesh button at pangoln GUI, you need to specify the save path at zParametersDefault.txt for item "s_generateMeshDir".
+## 进入工作目录
+cd /WORK_DIR/
 
+## 创建工作文件夹以及数据文件夹
+mkdir VoxelFusion && cd VoxelFusion && mkdir data && mkdir output
 
+## 获取参数文件（和原来的BundleFusion的参数文件略有不同，如果内参改变了要在里面进行相应改动）
+wget https://gitee.com/Uncle-Justice/BundleFusion_Ubuntu_Pangolin/blob/master/zParametersDefault.txt 
+wget https://gitee.com/Uncle-Justice/BundleFusion_Ubuntu_Pangolin/blob/master/zParametersBundlingDefault.txt
+
+## 准备数据集（.jpg+.png+.txt， 不需要转成.sens文件）
+cp -r /DATASET_DIR ./data
+
+## 运行nvidia-docker
+sudo nvidia-docker run -v ./VoxelFusion:/tmp  --rm -u root  873292889/voxelfusion voxelfusion /tmp/zParametersDefault.txt  /tmp/zParametersBundlingDefault.txt /tmp/data /tmp/output
+```
 
 ## Result
 
 We provide a reconstruction result of dataset [office2](http://graphics.stanford.edu/projects/bundlefusion/data/office2/office2.zip) with Google Drive: [https://drive.google.com/file/d/121rR0_6H_xTpsSsYAHIHV_sZqJjHdN5R/view?usp=sharing](https://drive.google.com/file/d/121rR0_6H_xTpsSsYAHIHV_sZqJjHdN5R/view?usp=sharing)
 
+## Remark
 
-
-## Issues
-
-* Pangolin OpenGL error:
-
-<b>Problem:</b>
-
-```
-/usr/local/include/pangolin/gl/glsl.h:709:70: error: ‘glUniformMatrix3dv’ was not declared in this scope
-     glUniformMatrix3dv( GetUniformHandle(name), 1, GL_FALSE, m.data());
-                                                                      ^
-/usr/local/include/pangolin/gl/glsl.h: In member function ‘void pangolin::GlSlProgram::SetUniform(const string&, const Matrix4d&)’:
-/usr/local/include/pangolin/gl/glsl.h:713:70: error: ‘glUniformMatrix4dv’ was not declared in this scope
-     glUniformMatrix4dv( GetUniformHandle(name), 1, GL_FALSE, m.data());
-```
-
-<b>Solution:</b>
-
-```
-sudo vim /usr/local/include/pangolin/gl/glplatform.h
-#goto line#58
-#replace "GL/glew.h" with "/usr/include/GL/glew.h"
-```
-
-## Contact
-
-contact with fangasfrank #at gmail.com for porting issues.
+Pangolin is used in the original project but discarded here. Not only because visualization is not much needed in my application but Pangolin remains unstable in the project.
