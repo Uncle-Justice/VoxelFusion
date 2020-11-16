@@ -8,10 +8,25 @@
 #include <GlobalAppState.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/stat.h> 　
+#include <sys/types.h>
+#include <cstddef>
+#include <string.h>
+#include <stdio.h>
+
+void mkdir_path(const std::string p_cMkdir)
+{
+    int isCreate = mkdir(p_cMkdir.c_str(),S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+ 
+    if( !isCreate )
+    printf("create path:%s\n",p_cMkdir.c_str());
+    else
+    printf("create path failed! error code : %s \n",p_cMkdir.c_str());
+}
 
 int main ( int argc, char** argv )
 {
-    if ( argc != 4 )
+    if ( argc != 5 )
     {
         std::cout<<"usage: ./bundle_fusion_example /path/to/zParametersDefault.txt /path/to/zParametersBundlingDefault.txt /path/to/dataset"<<std::endl;
         return -1;
@@ -27,11 +42,12 @@ int main ( int argc, char** argv )
     std::string app_config_file = "";
     std::string bundle_config_file = "";
     std::string dataset_root = "";
+    std::string output_root = "";
 
     app_config_file = std::string ( argv[1] );
     bundle_config_file = std::string ( argv[2] );
     dataset_root = std::string ( argv[3] );
-
+    output_root = std::string( argv[4] );
     // step 1: init all resources
     if ( !initBundleFusion ( app_config_file, bundle_config_file ) )
     {
@@ -49,6 +65,19 @@ int main ( int argc, char** argv )
         return -1;
     }
 
+    DIR *dir_out;
+    dir_out = opendir(output_root.c_str());
+    if(dir_out == nullptr){
+        std::cerr << "output path not exist or empty, exit." << std::endl;
+        return -1;
+    }
+
+    mkdir_path(output_root+"/scan");
+    mkdir_path(output_root+"/hash");
+    mkdir_path(output_root+"/raycast");
+
+    closedir(dir_out);
+    
     std::vector<std::string> filenames;
     while ( ( ptr=readdir ( dir ) ) !=nullptr )
     {
@@ -113,7 +142,9 @@ int main ( int argc, char** argv )
     std::cout<<"Pangolin Viewer save mesh into file" << std::endl;
     struct timeval t;
     gettimeofday ( &t,nullptr );
-    saveMeshIntoFile ( GlobalAppState::get().s_generateMeshDir + "scan_" + std::to_string ( t.tv_sec ) + ".ply", true );
+    writeHashData(output_root+"/hash/hashData_"+std::to_string ( t.tv_sec )+".bin");
+	writeRayCastData(output_root+"/raycast/rayCastData_"+std::to_string ( t.tv_sec )+".bin");
+    saveMeshIntoFile ( output_root + "/scan/scan_" + std::to_string ( t.tv_sec ) + ".ply", true );
 
     deinitBundleFusion();
 

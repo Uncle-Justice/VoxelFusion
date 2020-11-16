@@ -524,9 +524,9 @@ bool saveMeshIntoFile ( const std::string& filename, bool overwriteExistingFile 
         //g_chunkGrid->startMultiThreading();
 
         
-        writeHashData("./hashData_"+filename.substr(filename.length()-14).substr(0,10)+".bin");
+        // writeHashData("./hashData_"+filename.substr(filename.length()-14).substr(0,10)+".bin");
 
-		writeRayCastData("./rayCastData_"+filename.substr(filename.length()-14).substr(0,10)+".bin");
+		// writeRayCastData("./rayCastData_"+filename.substr(filename.length()-14).substr(0,10)+".bin");
 
     }
     else

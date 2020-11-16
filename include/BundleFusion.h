@@ -50,6 +50,11 @@ void setPublishRGBFlag(bool publish_flag);
  * */
 void setPublishMeshFlag(bool publish_flag);
 
+
+void writeHashData(const std::string& filename);
+
+void writeRayCastData(const std::string& filename);
+
 /**
  * save mesh function (.ply file for meshlab)
  * @param filename save file name
