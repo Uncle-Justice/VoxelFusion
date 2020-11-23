@@ -105,7 +105,8 @@
 	X(vec4f, s_topVideoCameraPose) \
 	X(vec2f, s_topVideoMinMax) \
 	X(uint, s_numSolveFramesBeforeExit) \
-	X(std::string, s_generateMeshDir)
+	X(std::string, s_generateMeshDir) \
+	X(bool, s_generateMeshWithNormals)
 
 
 #ifndef VAR_NAME

@@ -128,7 +128,7 @@ struct RayCastData {
 			return make_float3(frac(val.x), frac(val.y), frac(val.z));
 	}
 	
-	__device__
+		__device__
 	bool trilinearInterpolationSimpleFastFast(const HashDataStruct& hash, const float3& pos, float& dist, uchar3& color) const {
 		const float oSet = c_hashParams.m_virtualVoxelSize;
 		const float3 posDual = pos-make_float3(oSet/2.0f, oSet/2.0f, oSet/2.0f);
@@ -149,6 +149,57 @@ struct RayCastData {
 		
 		return true;
 	}
+
+	__device__
+	bool trilinearInterpolationSimpleFastFast2(const HashDataStruct& hash, const float3& pos, float& dist, uchar3& color, float3& normal) const {
+		const float oSet = c_hashParams.m_virtualVoxelSize;
+		const float3 posDual = pos-make_float3(oSet/2.0f, oSet/2.0f, oSet/2.0f);
+		float3 weight = frac(hash.worldToVirtualVoxelPosFloat(pos));
+
+		dist = 0.0f;
+		float3 colorFloat = make_float3(0.0f, 0.0f, 0.0f);
+		Voxel v = hash.getVoxel(posDual+make_float3(0.0f, 0.0f, 0.0f)); if(v.weight == 0) return false; float3 vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+= (1.0f-weight.x)*(1.0f-weight.y)*(1.0f-weight.z)*v.sdf; colorFloat+= (1.0f-weight.x)*(1.0f-weight.y)*(1.0f-weight.z)*vColor;
+		      v = hash.getVoxel(posDual+make_float3(oSet, 0.0f, 0.0f)); if(v.weight == 0) return false;		   vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+=	   weight.x *(1.0f-weight.y)*(1.0f-weight.z)*v.sdf; colorFloat+=	   weight.x *(1.0f-weight.y)*(1.0f-weight.z)*vColor;
+		      v = hash.getVoxel(posDual+make_float3(0.0f, oSet, 0.0f)); if(v.weight == 0) return false;		   vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+= (1.0f-weight.x)*	   weight.y *(1.0f-weight.z)*v.sdf; colorFloat+= (1.0f-weight.x)*	   weight.y *(1.0f-weight.z)*vColor;
+		      v = hash.getVoxel(posDual+make_float3(0.0f, 0.0f, oSet)); if(v.weight == 0) return false;		   vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+= (1.0f-weight.x)*(1.0f-weight.y)*	   weight.z *v.sdf; colorFloat+= (1.0f-weight.x)*(1.0f-weight.y)*	   weight.z *vColor;
+		      v = hash.getVoxel(posDual+make_float3(oSet, oSet, 0.0f)); if(v.weight == 0) return false;		   vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+=	   weight.x *	   weight.y *(1.0f-weight.z)*v.sdf; colorFloat+=	   weight.x *	   weight.y *(1.0f-weight.z)*vColor;
+		      v = hash.getVoxel(posDual+make_float3(0.0f, oSet, oSet)); if(v.weight == 0) return false;		   vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+= (1.0f-weight.x)*	   weight.y *	   weight.z *v.sdf; colorFloat+= (1.0f-weight.x)*	   weight.y *	   weight.z *vColor;
+		      v = hash.getVoxel(posDual+make_float3(oSet, 0.0f, oSet)); if(v.weight == 0) return false;		   vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+=	   weight.x *(1.0f-weight.y)*	   weight.z *v.sdf; colorFloat+=	   weight.x *(1.0f-weight.y)*	   weight.z *vColor;
+		      v = hash.getVoxel(posDual+make_float3(oSet, oSet, oSet)); if(v.weight == 0) return false;		   vColor = make_float3(v.color.x, v.color.y, v.color.z); dist+=	   weight.x *	   weight.y *	   weight.z *v.sdf; colorFloat+=	   weight.x *	   weight.y *	   weight.z *vColor;
+		color = make_uchar3(colorFloat.x, colorFloat.y, colorFloat.z);//v.color;
+
+		// wrong way to compute cube vertex normal and cause bugs
+		/* float3 normalFloat = make_float3(0.0f, 0.0f, 0.0f);
+		Voxel v1, v2;
+		v1 = hash.getVoxel(posDual+make_float3(oSet, oSet/2.0f, oSet/2.0f));
+		v2 = hash.getVoxel(posDual+make_float3(0.0f, oSet/2.0f, oSet/2.0f));
+		normalFloat.x = float((v1.sdf - v2.sdf))/oSet;
+		Voxel v3, v4;
+		v3 = hash.getVoxel(posDual+make_float3(oSet/2.0f, oSet, oSet/2.0f));
+		v4 = hash.getVoxel(posDual+make_float3(oSet/2.0f, 0.0f, oSet/2.0f));
+		normalFloat.y = float((v3.sdf - v4.sdf))/oSet; 
+		Voxel v5, v6;
+		v5 = hash.getVoxel(posDual+make_float3(oSet/2.0f, oSet/2.0f, oSet));
+		v6 = hash.getVoxel(posDual+make_float3(oSet/2.0f, oSet/2.0f, 0.0f));
+		normalFloat.z = float((v5.sdf - v6.sdf))/oSet;
+		normal = make_float3(normalFloat.x, normalFloat.y, normalFloat.z); */
+		
+		const float voxelSize = c_hashParams.m_virtualVoxelSize;
+		float3 offset = make_float3(voxelSize, voxelSize, voxelSize);
+
+		float distp00; uchar3 colorp00; trilinearInterpolationSimpleFastFast(hash, pos-make_float3(0.5f*offset.x, 0.0f, 0.0f), distp00, colorp00);
+		float dist0p0; uchar3 color0p0; trilinearInterpolationSimpleFastFast(hash, pos-make_float3(0.0f, 0.5f*offset.y, 0.0f), dist0p0, color0p0);
+		float dist00p; uchar3 color00p; trilinearInterpolationSimpleFastFast(hash, pos-make_float3(0.0f, 0.0f, 0.5f*offset.z), dist00p, color00p);
+
+		float dist100; uchar3 color100; trilinearInterpolationSimpleFastFast(hash, pos+make_float3(0.5f*offset.x, 0.0f, 0.0f), dist100, color100);
+		float dist010; uchar3 color010; trilinearInterpolationSimpleFastFast(hash, pos+make_float3(0.0f, 0.5f*offset.y, 0.0f), dist010, color010);
+		float dist001; uchar3 color001; trilinearInterpolationSimpleFastFast(hash, pos+make_float3(0.0f, 0.0f, 0.5f*offset.z), dist001, color001);
+
+		float3 grad = make_float3((distp00-dist100)/offset.x, (dist0p0-dist010)/offset.y, (dist00p-dist001)/offset.z);
+		normal = - grad/length(grad);
+		return true;
+	}
+	
 	//__device__
 	//bool trilinearInterpolationSimpleFastFast(const HashData& hash, const float3& pos, float& dist, uchar3& color) const {
 	//	const float oSet = c_hashParams.m_virtualVoxelSize;

@@ -41,8 +41,16 @@ void CUDAMarchingCubesHashSDF::copyTrianglesToCPU()
         vec3f* vc = ( vec3f* ) cpuData.d_triangles;
         for ( unsigned int i = 0; i < 3 * nTriangles; i++ )
         {
-            m_meshData.m_Vertices[baseIdx + i] = vc[2 * i + 0];
-            m_meshData.m_Colors[baseIdx + i] = vec4f ( vc[2 * i + 1] );
+            m_meshData.m_Vertices[baseIdx + i] = vc[3 * i + 0];
+            m_meshData.m_Colors[baseIdx + i] = vec4f ( vc[3 * i + 1] );
+        }
+
+        if(GlobalAppState::get().s_generateMeshWithNormals){
+            m_meshData.m_Normals.resize ( baseIdx + 3 * nTriangles );
+            for ( unsigned int i = 0; i < 3 * nTriangles; i++ )
+            {
+            m_meshData.m_Normals[baseIdx + i] = vc[3 * i + 2];
+            }
         }
     }
     cpuData.free();

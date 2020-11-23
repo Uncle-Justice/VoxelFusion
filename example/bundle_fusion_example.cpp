@@ -20,8 +20,8 @@ void mkdir_path(const std::string p_cMkdir)
  
     if( !isCreate )
     printf("create path:%s\n",p_cMkdir.c_str());
-    else
-    printf("create path failed! error code : %s \n",p_cMkdir.c_str());
+    // else
+    // printf("create path failed! error code : %s \n",p_cMkdir.c_str());
 }
 
 int main ( int argc, char** argv )

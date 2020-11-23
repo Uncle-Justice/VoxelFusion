@@ -9,7 +9,7 @@
     "type": "cppdbg",
     "request": "launch",
     "program": "${workspaceFolder}/build/bundle_fusion_example",
-    "args": ["./zParametersDefault.txt", "./zParametersBundlingDefault.txt","./data/office3"],
+    "args": ["./zParametersDefault.txt", "./zParametersBundlingDefault.txt","./data/apt0_random300", "./output"],
     "stopAtEntry": false,
     "cwd": "${workspaceFolder}",
     "environment": [],

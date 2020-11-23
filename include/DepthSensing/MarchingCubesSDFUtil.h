@@ -31,8 +31,9 @@ struct MarchingCubesData {
 
 	struct Vertex
 	{
-		float3 p;
-		float3 c;
+		float3 p;// position
+		float3 c;// color
+		float3 n;// normal
 	};
 
 	struct Triangle
@@ -130,17 +131,20 @@ struct MarchingCubesData {
 		const float P = hashParams.m_virtualVoxelSize/2.0f;
 		const float M = -P;
 
-		float3 p000 = worldPos+make_float3(M, M, M); float dist000; uchar3 color000; bool valid000 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p000, dist000, color000);
-		float3 p100 = worldPos+make_float3(P, M, M); float dist100; uchar3 color100; bool valid100 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p100, dist100, color100);
-		float3 p010 = worldPos+make_float3(M, P, M); float dist010; uchar3 color010; bool valid010 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p010, dist010, color010);
-		float3 p001 = worldPos+make_float3(M, M, P); float dist001; uchar3 color001; bool valid001 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p001, dist001, color001);
-		float3 p110 = worldPos+make_float3(P, P, M); float dist110; uchar3 color110; bool valid110 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p110, dist110, color110);
-		float3 p011 = worldPos+make_float3(M, P, P); float dist011; uchar3 color011; bool valid011 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p011, dist011, color011);
-		float3 p101 = worldPos+make_float3(P, M, P); float dist101; uchar3 color101; bool valid101 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p101, dist101, color101);
-		float3 p111 = worldPos+make_float3(P, P, P); float dist111; uchar3 color111; bool valid111 = rayCastData.trilinearInterpolationSimpleFastFast(hashData, p111, dist111, color111);
+		// 这8个点的color，sdf是用三插值算的
+		float3 p000 = worldPos+make_float3(M, M, M); float dist000; uchar3 color000; float3 normal000; bool valid000 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p000, dist000, color000, normal000);
+		float3 p100 = worldPos+make_float3(P, M, M); float dist100; uchar3 color100; float3 normal100; bool valid100 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p100, dist100, color100, normal100);
+		float3 p010 = worldPos+make_float3(M, P, M); float dist010; uchar3 color010; float3 normal010; bool valid010 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p010, dist010, color010, normal010);
+		float3 p001 = worldPos+make_float3(M, M, P); float dist001; uchar3 color001; float3 normal001; bool valid001 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p001, dist001, color001, normal001);
+		float3 p110 = worldPos+make_float3(P, P, M); float dist110; uchar3 color110; float3 normal110; bool valid110 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p110, dist110, color110, normal110);
+		float3 p011 = worldPos+make_float3(M, P, P); float dist011; uchar3 color011; float3 normal011; bool valid011 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p011, dist011, color011, normal011);
+		float3 p101 = worldPos+make_float3(P, M, P); float dist101; uchar3 color101; float3 normal101; bool valid101 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p101, dist101, color101, normal101);
+		float3 p111 = worldPos+make_float3(P, P, P); float dist111; uchar3 color111; float3 normal111; bool valid111 = rayCastData.trilinearInterpolationSimpleFastFast2(hashData, p111, dist111, color111, normal111);
 
 		if(!valid000 || !valid100 || !valid010 || !valid001 || !valid110 || !valid011 || !valid101 || !valid111) return;
 
+		// cubeindex不断加2的幂，就是逐渐确定这是256种情况中的哪种
+		// 这个dist是不是就是sdf值？？？是不是sdf指的就是density？？？我现在觉得是的。
 		uint cubeindex = 0;
 		if(dist010 < isolevel) cubeindex += 1;
 		if(dist110 < isolevel) cubeindex += 2;
@@ -155,6 +159,7 @@ struct MarchingCubesData {
 		float distArray[] = {dist000, dist100, dist010, dist001, dist110, dist011, dist101, dist111};
 		for(uint k = 0; k < 8; k++) {
 			for(uint l = 0; l < 8; l++) {
+				// 两个点一正一负就有可能是等值面和cube的交点
 				if(distArray[k]*distArray[l] < 0.0f) {
 					if(abs(distArray[k]) + abs(distArray[l]) > thres) return;
 				}
@@ -177,20 +182,22 @@ struct MarchingCubesData {
 
 		Voxel v = hashData.getVoxel(worldPos);
 
+		// 等值面最多和cube能相交出4个三角，即12个和cube边相交的点（所以vertlist中的十二个元素并不都会被赋值）
+		// 这十二个点的pos和color使用所在的边的顶点，插值得到的
 		Vertex vertlist[12];
-		if(edgeTable[cubeindex] & 1)	vertlist[0]  = vertexInterp(isolevel, p010, p110, dist010, dist110, v.color, v.color);
-		if(edgeTable[cubeindex] & 2)	vertlist[1]  = vertexInterp(isolevel, p110, p100, dist110, dist100, v.color, v.color);
-		if(edgeTable[cubeindex] & 4)	vertlist[2]  = vertexInterp(isolevel, p100, p000, dist100, dist000, v.color, v.color);
-		if(edgeTable[cubeindex] & 8)	vertlist[3]  = vertexInterp(isolevel, p000, p010, dist000, dist010, v.color, v.color);
-		if(edgeTable[cubeindex] & 16)	vertlist[4]  = vertexInterp(isolevel, p011, p111, dist011, dist111, v.color, v.color);
-		if(edgeTable[cubeindex] & 32)	vertlist[5]  = vertexInterp(isolevel, p111, p101, dist111, dist101, v.color, v.color);
-		if(edgeTable[cubeindex] & 64)	vertlist[6]  = vertexInterp(isolevel, p101, p001, dist101, dist001, v.color, v.color);
-		if(edgeTable[cubeindex] & 128)	vertlist[7]  = vertexInterp(isolevel, p001, p011, dist001, dist011, v.color, v.color);
-		if(edgeTable[cubeindex] & 256)	vertlist[8]	 = vertexInterp(isolevel, p010, p011, dist010, dist011, v.color, v.color);
-		if(edgeTable[cubeindex] & 512)	vertlist[9]  = vertexInterp(isolevel, p110, p111, dist110, dist111, v.color, v.color);
-		if(edgeTable[cubeindex] & 1024) vertlist[10] = vertexInterp(isolevel, p100, p101, dist100, dist101, v.color, v.color);
-		if(edgeTable[cubeindex] & 2048) vertlist[11] = vertexInterp(isolevel, p000, p001, dist000, dist001, v.color, v.color);
-
+		if(edgeTable[cubeindex] & 1)	vertlist[0]  = vertexInterp(isolevel, p010, p110, dist010, dist110, v.color, v.color, normal010, normal110);
+		if(edgeTable[cubeindex] & 2)	vertlist[1]  = vertexInterp(isolevel, p110, p100, dist110, dist100, v.color, v.color, normal110, normal100);
+		if(edgeTable[cubeindex] & 4)	vertlist[2]  = vertexInterp(isolevel, p100, p000, dist100, dist000, v.color, v.color, normal100, normal000);
+		if(edgeTable[cubeindex] & 8)	vertlist[3]  = vertexInterp(isolevel, p000, p010, dist000, dist010, v.color, v.color, normal000, normal010);
+		if(edgeTable[cubeindex] & 16)	vertlist[4]  = vertexInterp(isolevel, p011, p111, dist011, dist111, v.color, v.color, normal011, normal111);
+		if(edgeTable[cubeindex] & 32)	vertlist[5]  = vertexInterp(isolevel, p111, p101, dist111, dist101, v.color, v.color, normal111, normal101);
+		if(edgeTable[cubeindex] & 64)	vertlist[6]  = vertexInterp(isolevel, p101, p001, dist101, dist001, v.color, v.color, normal101, normal001);
+		if(edgeTable[cubeindex] & 128)	vertlist[7]  = vertexInterp(isolevel, p001, p011, dist001, dist011, v.color, v.color, normal001, normal011);
+		if(edgeTable[cubeindex] & 256)	vertlist[8]	 = vertexInterp(isolevel, p010, p011, dist010, dist011, v.color, v.color, normal010, normal011);
+		if(edgeTable[cubeindex] & 512)	vertlist[9]  = vertexInterp(isolevel, p110, p111, dist110, dist111, v.color, v.color, normal110, normal111);
+		if(edgeTable[cubeindex] & 1024) vertlist[10] = vertexInterp(isolevel, p100, p101, dist100, dist101, v.color, v.color, normal100, normal101);
+		if(edgeTable[cubeindex] & 2048) vertlist[11] = vertexInterp(isolevel, p000, p001, dist000, dist001, v.color, v.color, normal000, normal001);
+		
 		for(int i=0; triTable[cubeindex][i] != -1; i+=3)
 		{
 			Triangle t;
@@ -203,10 +210,10 @@ struct MarchingCubesData {
 	}
 
 	__device__
-	Vertex vertexInterp(float isolevel, const float3& p1, const float3& p2, float d1, float d2, const uchar4& c1, const uchar4& c2) const
+	Vertex vertexInterp(float isolevel, const float3& p1, const float3& p2, float d1, float d2, const uchar4& c1, const uchar4& c2, const float3& n1, const float3& n2) const
 	{
-		Vertex r1; r1.p = p1; r1.c = make_float3(c1.x, c1.y, c1.z) / 255.f;
-		Vertex r2; r2.p = p2; r2.c = make_float3(c2.x, c2.y, c2.z) / 255.f;
+		Vertex r1; r1.p = p1; r1.c = make_float3(c1.x, c1.y, c1.z) / 255.f; r1.n = n1;
+		Vertex r2; r2.p = p2; r2.c = make_float3(c2.x, c2.y, c2.z) / 255.f; r2.n = n2;
 
 		if(abs(isolevel-d1) < 0.00001f)		return r1;
 		if(abs(isolevel-d2) < 0.00001f)		return r2;
@@ -222,6 +229,10 @@ struct MarchingCubesData {
 		res.c.x = (float)(c1.x + mu * (float)(c2.x - c1.x)) / 255.f; // Color
 		res.c.y = (float)(c1.y + mu * (float)(c2.y - c1.y)) / 255.f;
 		res.c.z = (float)(c1.z + mu * (float)(c2.z - c1.z)) / 255.f;
+
+		res.n.x = n1.x + mu * (n2.x - n1.x); // Normals
+		res.n.y = n1.y + mu * (n2.y - n1.y);
+		res.n.z = n1.z + mu * (n2.z - n1.z);
 
 		return res;
 	}
@@ -268,7 +279,7 @@ struct MarchingCubesData {
 			*d_numTriangles = d_params->m_maxNumTriangles;
 			return; // todo
 		}
-
+		
 		Triangle& triangle = d_triangles[addr];
 		triangle.v0 = t.v0;
 		triangle.v1 = t.v1;
