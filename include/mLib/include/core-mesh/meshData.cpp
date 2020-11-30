@@ -303,24 +303,26 @@ unsigned int MeshData<FloatType>::removeDegeneratedFaces()
 
 	for (size_t i = 0; i < m_FaceIndicesVertices.size(); i++) {
 		std::unordered_set<unsigned int> _set(m_FaceIndicesVertices[i].size());
-		bool foundDuplicate = false;
-		for (unsigned int idx : m_FaceIndicesVertices[i]) {
-			if (_set.find(idx) != _set.end()) {
-				foundDuplicate = true;
-				break;
-			} else {
-				_set.insert(idx);
-			}
-		}
-		if (!foundDuplicate) {
-			newFacesIndicesVertices.push_back(m_FaceIndicesVertices[i]);
+	bool foundDuplicate = false;
+	// for (auto idx : m_FaceIndicesVertices[i]) {
+	for (int j = 0; j < m_FaceIndicesVertices[i].size(); ++j) {
+		auto idx = m_FaceIndicesVertices[i][j];
+		if (_set.find(idx) != _set.end()) {
+			foundDuplicate = true;
+			break;
+		} else {
+			_set.insert(idx);
 		}
 	}
-	if (m_FaceIndicesVertices.size() != newFacesIndicesVertices.size()) {
-		m_FaceIndicesVertices = newFacesIndicesVertices;
+	if (!foundDuplicate) {
+		newFacesIndicesVertices.push_back(m_FaceIndicesVertices[i]);
 	}
+}
+if (m_FaceIndicesVertices.size() != newFacesIndicesVertices.size()) {
+	m_FaceIndicesVertices = newFacesIndicesVertices;
+}
 
-	return (unsigned int)m_FaceIndicesVertices.size();
+return (unsigned int)m_FaceIndicesVertices.size();
 }
 
 
