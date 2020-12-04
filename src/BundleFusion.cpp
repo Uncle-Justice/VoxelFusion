@@ -181,6 +181,12 @@ bool processInputRGBDFrame ( cv::Mat& rgb, cv::Mat& depth, mat4f& pose )
         return false;
     }
 
+    cv::Mat rgb_1,depth_1;
+    cv::flip(rgb,rgb_1,1);
+    cv::flip(depth,depth_1,1);
+    rgb=rgb_1;
+    depth=depth_1;
+
     // Read Input
     ///////////////////////////////////////
 #ifdef RUN_MULTITHREADED
@@ -257,12 +263,15 @@ bool processInputRGBDFrame ( cv::Mat& rgb, cv::Mat& depth, mat4f& pose )
         if ( GlobalAppState::get().s_binaryDumpSensorUseTrajectory)
         {
             //overwrite transform and use given trajectory in this case
-            pose[1] = -1.0f * pose[1];
-            pose[2] = -1.0f * pose[2];
-            pose[3] = -1.0f * pose[3];
-            pose[4] = -1.0f * pose[4];
-            pose[8] = -1.0f * pose[8];
-            pose[12] = -1.0f * pose[12];
+            // pose[1] = -1.0f * pose[1];
+            // pose[2] = -1.0f * pose[2];
+            // pose[3] = -1.0f * pose[3];
+            // pose[4] = -1.0f * pose[4];
+            // pose[5] = -1.0f * pose[5];
+            // pose[8] = -1.0f * pose[8];
+            // pose[12] = -1.0f * pose[12];
+            // pose[10] = -1.0f * pose[10];
+
             transformation = pose;
             validTransform = true;
         }
@@ -535,8 +544,7 @@ bool saveMeshIntoFile ( const std::string& filename, bool overwriteExistingFile 
         vec3f p ( posWorld.x, posWorld.y, posWorld.z );
         g_marchingCubesHashSDF->extractIsoSurface ( *g_chunkGrid, g_rayCast->getRayCastData(), p, GlobalAppState::getInstance().s_streamingRadius );
     }
-
-    const mat4f& rigidTransform = mat4f::identity();//g_lastRigidTransform
+    const mat4f& rigidTransform = mat4f::identity();
     g_marchingCubesHashSDF->saveMesh ( filename, &rigidTransform, overwriteExistingFile );
 
     std::cout << "Mesh generation time " << t.getElapsedTime() << " seconds" << std::endl;
